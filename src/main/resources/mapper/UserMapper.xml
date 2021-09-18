@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace 该mapper.xml映射文件的唯一标识符 -->
+<mapper namespace="com.example.multidatasource.mapper.UserMapper">
+
+    <resultMap id="User" type="com.example.multidatasource.pojo.User">
+        <result column="id" property="id"></result>
+        <result column="userId" property="userId"></result>
+        <result column="userName" property="userName"></result>
+    </resultMap>
+
+
+    <insert id="insert">
+        insert into tb_user values (0,#{userId},#{userName})
+    </insert>
+
+    <select id="queryAllUsers" resultMap="User">
+        select * from tb_user
+    </select>
+
+</mapper>
