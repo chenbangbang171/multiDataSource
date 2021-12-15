@@ -77,7 +77,7 @@ public class DataSourceAsp implements InitializingBean {
 
 
     /**
-     * pointcut
+     * pointcut 定义一个切点，所有使用UseDataSource这个注解的方法都会执行这个切点相关的方法
      */
     @Pointcut("@annotation(com.example.multidatasource.annotation.UseDataSource)")
     public void useDataSource() {
@@ -93,15 +93,21 @@ public class DataSourceAsp implements InitializingBean {
     @Around("useDataSource() && @annotation(anno)")
     public Object dataSourceSwitcher(ProceedingJoinPoint joinPoint, UseDataSource anno) throws Throwable {
         String ds="";
+        //判断注解中的useHashKey属性，如果为true说明需要动态切换数据源，此属性默认为false
         if(anno.useHashKey()){
+            //通过getHashKeyFromMethod来获取hash值，再用getByKey来获取某一数据源
             ds= DataSourceType.getByKey(getHashKeyFromMethod(joinPoint));
         }else{
+            //如果使用指定数据源，则获取注解上写好的值
             DataSourceType value = anno.value();
             ds=value.getSource();
         }
+        //切换数据源
         DataSourceSwitcher.setDataSourceKey(ds);
         try {
+            //执行方法
             Object result = joinPoint.proceed();
+            //返回结果
             return result;
         }catch (Exception e){
             throw e;
@@ -118,18 +124,24 @@ public class DataSourceAsp implements InitializingBean {
      * @return
      */
     public String getHashKeyFromMethod(ProceedingJoinPoint joinPoint) {
+        //获取方法签名
         MethodSignature signature = MethodSignature.class.cast(joinPoint.getSignature());
+        //获取调用的方法
         Method method = signature.getMethod();
         Integer positionFromCache = getPositionFromCache(method);
+        //获取方法的参数列表
         Object[] args = joinPoint.getArgs();
         if (positionFromCache != null) {
             return String.valueOf(args[positionFromCache]);
         }
+        //获取方法的参数名
         Parameter[] declaredFields = method.getParameters();
         int index = 0;
         for (Parameter temp : declaredFields) {
             Annotation[] annotations = temp.getAnnotations();
+            //对每一个参数名获取其注解
             for (Annotation anTemp : annotations) {
+                //对该参数上的注解依次做判断，是不是DSKey，如果是，则代表该参数的hash值就是选取数据源的依据
                 if (anTemp instanceof DSKey) {
                     putToCache(method, index);
                     return String.valueOf(args[index]);
